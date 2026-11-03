@@ -2,7 +2,7 @@
 module.exports = {
   colors: {
     primary: {
-      DEFAULT: '#2D3748', // Charcoal
+      DEFAULT: '#98A78F', // Charcoal
       hover: '#1A202C',
       light: '#4A5568',
     },

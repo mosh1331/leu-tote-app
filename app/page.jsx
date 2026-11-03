@@ -67,10 +67,6 @@ export default function HomePage({ searchParams }) {
         </section>
       </main>
 
-      {/* 5. Mobile Sticky Bottom Nav */}
-      <div className="md:hidden">
-        <BottomNav activeTab="home" />
-      </div>
     </div>
   );
 }
