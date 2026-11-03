@@ -1,31 +1,7 @@
 // app/api/admin/products/route.js
 import { NextResponse } from 'next/server';
-import { withTransaction, getDb } from '@/lib/db';
+import { withTransaction } from '@/lib/db';
 
-// 1. GET: Fetch all products (drafts and published) for admin table
-export async function GET() {
-  const db = getDb();
-  try {
-    const query = `
-      SELECT 
-        p.*,
-        COALESCE(json_agg(DISTINCT pv.*) FILTER (WHERE pv.id IS NOT NULL), '[]') AS variants,
-        COALESCE(json_agg(DISTINCT pi.*) FILTER (WHERE pi.id IS NOT NULL), '[]') AS images
-      FROM products p
-      LEFT JOIN product_variants pv ON pv.product_id = p.id
-      LEFT JOIN product_images pi ON pi.product_id = p.id
-      GROUP BY p.id
-      ORDER BY p.created_at DESC;
-    `;
-    const res = await db.query(query);
-    return NextResponse.json({ products: res.rows });
-  } catch (error) {
-    console.error('Failed to fetch admin products:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-}
-
-// 2. POST: Add new product with variants & images
 export async function POST(req) {
   try {
     const body = await req.json();
@@ -43,19 +19,25 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 });
     }
 
-    const generatedSlug = slug?.trim() || title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+    // Auto-generate a clean slug if one was not provided
+    const cleanSlug = (slug?.trim() || title)
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s-]/g, '') // remove special characters
+      .replace(/\s+/g, '-')         // replace spaces with hyphens
+      .replace(/-+/g, '-');        // collapse consecutive hyphens
 
     const result = await withTransaction(async (client) => {
-      // Insert product
+      // 1. Insert product with auto-generated slug
       const pRes = await client.query(
         `INSERT INTO products (title, slug, description, category, is_active)
          VALUES ($1, $2, $3, $4, $5)
          RETURNING id`,
-        [title, generatedSlug, description || '', category, isActive]
+        [title, cleanSlug, description || '', category, isActive]
       );
       const productId = pRes.rows[0].id;
 
-      // Insert variants (pricing and stock)
+      // 2. Insert variants
       if (variants.length > 0) {
         for (const v of variants) {
           const sku = v.sku || `SKU-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
@@ -76,7 +58,7 @@ export async function POST(req) {
         }
       }
 
-      // Insert primary image
+      // 3. Insert images
       if (images.length > 0) {
         for (let i = 0; i < images.length; i++) {
           if (images[i]?.image_url) {
@@ -89,34 +71,12 @@ export async function POST(req) {
         }
       }
 
-      return { productId, slug: generatedSlug };
+      return { productId, slug: cleanSlug };
     });
 
     return NextResponse.json({ success: true, ...result }, { status: 201 });
   } catch (error) {
     console.error('Failed to create product:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-}
-
-// 3. PATCH: Toggle Draft / Published status
-export async function PATCH(req) {
-  const db = getDb();
-  try {
-    const { id, isActive } = await req.json();
-
-    if (!id) {
-      return NextResponse.json({ error: 'Product ID is required' }, { status: 400 });
-    }
-
-    await db.query(
-      'UPDATE products SET is_active = $1, updated_at = NOW() WHERE id = $2',
-      [isActive, id]
-    );
-
-    return NextResponse.json({ success: true, is_active: isActive });
-  } catch (error) {
-    console.error('Failed to update status:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
