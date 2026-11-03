@@ -324,11 +324,6 @@ export default async function ProductDetailPage({ params }) {
 
         </div>
       </main>
-
-      {/* Mobile Sticky Navigation */}
-      <div className="md:hidden">
-        <BottomNav activeTab="home" />
-      </div>
     </div>
   );
 }
