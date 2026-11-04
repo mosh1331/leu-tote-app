@@ -2,7 +2,6 @@
 import Link from 'next/link';
 import Header from '@/components/Header';
 import HeroCarousel from '@/components/HeroCarousel';
-import BottomNav from '@/components/BottomNav';
 import ProductGrid from '@/components/ProductGrid';
 import SearchFilterForm from '@/components/SearchFilterForm';
 import { CATEGORIES } from '@/lib/data';
