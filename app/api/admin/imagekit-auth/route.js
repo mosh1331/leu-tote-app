@@ -13,12 +13,9 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    // Generate a high-entropy UUID v4 token
+    // Generate an independent UUID v4 token per request
     const uniqueToken = crypto.randomUUID();
-    
-    // Pass custom token to getAuthenticationParameters
     const authParams = imagekit.getAuthenticationParameters(uniqueToken);
-    
     return NextResponse.json(authParams);
   } catch (error) {
     console.error('ImageKit auth error:', error);
