@@ -5,6 +5,7 @@ import Header from '@/components/Header';
 import BottomNav from '@/components/BottomNav';
 import ProductGallery from '@/components/ProductGallery';
 import ProductShareModal from '@/components/ProductShareModal';
+import AddToCartActions from '@/components/AddToCartActions';
 import { getDb } from '@/lib/db';
 import { STORE_INFO } from '@/lib/data';
 
@@ -105,7 +106,19 @@ export default async function ProductDetailPage({ params }) {
   try {
     const res = await db.query(
       `SELECT p.id, p.title, p.slug, p.description, p.category,
-              COALESCE(json_agg(DISTINCT pv.*) FILTER (WHERE pv.id IS NOT NULL), '[]') AS variants,
+              COALESCE(
+                json_agg(
+                  DISTINCT jsonb_build_object(
+                    'id', pv.id,
+                    'size_label', pv.size_label,
+                    'color_label', pv.color_label,
+                    'sku', pv.sku,
+                    'selling_price', pv.selling_price,
+                    'offer_price', pv.offer_price,
+                    'stock_quantity', pv.stock_quantity
+                  )
+                ) FILTER (WHERE pv.id IS NOT NULL), '[]'
+              ) AS variants,
               COALESCE(
                 json_agg(
                   DISTINCT jsonb_build_object(
@@ -288,14 +301,12 @@ export default async function ProductDetailPage({ params }) {
                 </span>
               </div>
 
-              {/* Actions: Proceed to Buy & Social Share */}
-              <div className="space-y-2.5 pt-2">
-                <Link
-                  href={`/checkout?slug=${product.slug}`}
-                  className="flex items-center justify-center w-full py-3.5 px-6 rounded-theme-md bg-themePrimary hover:bg-themePrimary-hover text-white text-sm font-bold shadow-md transition-all active:scale-[0.98]"
-                >
-                  Proceed to Buy ({STORE_INFO.currency}{offerPrice.toLocaleString()})
-                </Link>
+              {/* Checkout Integration: Add to Cart, Buy Now & Social Share */}
+              <div className="space-y-3 pt-2">
+                <AddToCartActions
+                  product={product}
+                  selectedVariant={primaryVariant}
+                />
 
                 <ProductShareModal
                   product={product}

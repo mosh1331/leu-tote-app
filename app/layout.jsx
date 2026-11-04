@@ -1,4 +1,5 @@
 // app/layout.jsx
+import { CartProvider } from '@/context/CartContext';
 import './globals.css';
 import { STORE_INFO } from '@/lib/data';
 
@@ -17,9 +18,9 @@ export default function RootLayout({ children }) {
     <html lang="en" className="h-full">
       <body className="min-h-screen bg-themeBg-canvas text-themeText-primary antialiased flex flex-col">
         {/* Full viewport responsive canvas */}
-        <div className="flex-1 flex flex-col w-full">
-          {children}
-        </div>
+        <CartProvider>
+          <div className="flex-1 flex flex-col w-full">{children}</div>
+        </CartProvider>
       </body>
     </html>
   );
