@@ -1,16 +1,15 @@
 // app/products/[slug]/page.jsx
-import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import Header from '@/components/Header';
 import BottomNav from '@/components/BottomNav';
+import ProductGallery from '@/components/ProductGallery';
 import ProductShareModal from '@/components/ProductShareModal';
 import { getDb } from '@/lib/db';
 import { STORE_INFO } from '@/lib/data';
 
 // 1. Dynamic SEO Metadata Generation with OpenGraph & Twitter tags
 export async function generateMetadata({ params }) {
-  // Await params for Next.js 15+ compatibility
   const resolvedParams = await params;
   const slug = resolvedParams?.slug;
 
@@ -22,7 +21,16 @@ export async function generateMetadata({ params }) {
     const res = await db.query(
       `SELECT p.id, p.title, p.slug, p.description, p.category,
               COALESCE(json_agg(DISTINCT pv.*) FILTER (WHERE pv.id IS NOT NULL), '[]') AS variants,
-              COALESCE(json_agg(DISTINCT pi.*) FILTER (WHERE pi.id IS NOT NULL), '[]') AS images
+              COALESCE(
+                json_agg(
+                  DISTINCT jsonb_build_object(
+                    'image_url', pi.image_url,
+                    'alt_text', pi.alt_text,
+                    'is_primary', pi.is_primary,
+                    'display_order', pi.display_order
+                  )
+                ) FILTER (WHERE pi.id IS NOT NULL), '[]'
+              ) AS images
        FROM products p
        LEFT JOIN product_variants pv ON pv.product_id = p.id AND pv.is_active = TRUE
        LEFT JOIN product_images pi ON pi.product_id = p.id
@@ -86,7 +94,6 @@ export async function generateMetadata({ params }) {
 
 // 2. Product Detail Page
 export default async function ProductDetailPage({ params }) {
-  // Await params so slug resolves properly
   const resolvedParams = await params;
   const slug = resolvedParams?.slug;
 
@@ -99,7 +106,16 @@ export default async function ProductDetailPage({ params }) {
     const res = await db.query(
       `SELECT p.id, p.title, p.slug, p.description, p.category,
               COALESCE(json_agg(DISTINCT pv.*) FILTER (WHERE pv.id IS NOT NULL), '[]') AS variants,
-              COALESCE(json_agg(DISTINCT pi.*) FILTER (WHERE pi.id IS NOT NULL), '[]') AS images
+              COALESCE(
+                json_agg(
+                  DISTINCT jsonb_build_object(
+                    'image_url', pi.image_url,
+                    'alt_text', pi.alt_text,
+                    'is_primary', pi.is_primary,
+                    'display_order', pi.display_order
+                  )
+                ) FILTER (WHERE pi.id IS NOT NULL), '[]'
+              ) AS images
        FROM products p
        LEFT JOIN product_variants pv ON pv.product_id = p.id AND pv.is_active = TRUE
        LEFT JOIN product_images pi ON pi.product_id = p.id
@@ -113,6 +129,13 @@ export default async function ProductDetailPage({ params }) {
   }
 
   if (!product) notFound();
+
+  // Sort images so primary / display_order 0 is first
+  const sortedImages = [...(product.images || [])].sort((a, b) => {
+    if (a.is_primary) return -1;
+    if (b.is_primary) return 1;
+    return (a.display_order || 0) - (b.display_order || 0);
+  });
 
   const primaryVariant = product.variants?.[0] || {};
   const offerPrice = Number(primaryVariant.offer_price || 0);
@@ -128,7 +151,7 @@ export default async function ProductDetailPage({ params }) {
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: product.title,
-    image: product.images?.map((i) => i.image_url) || [],
+    image: sortedImages.map((i) => i.image_url),
     description: product.description,
     brand: {
       '@type': 'Brand',
@@ -179,58 +202,20 @@ export default async function ProductDetailPage({ params }) {
         </nav>
       </div>
 
-      {/* Main Content Layout: Mobile stacked, Desktop side-by-side split */}
+      {/* Main Content Layout: Stacked on mobile, 7/5 split on desktop */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pt-4 sm:pt-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
           
-          {/* Left Column (Images Gallery): 7 cols on Desktop */}
-          <div className="lg:col-span-7 space-y-4">
-            <div className="relative w-full h-80 sm:h-[460px] md:h-[520px] rounded-theme-xl overflow-hidden bg-white shadow-sm border border-black/[0.06]">
-              {product.images?.[0] ? (
-                <Image
-                  src={product.images[0].image_url}
-                  alt={product.images[0].alt_text || product.title}
-                  fill
-                  priority
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 60vw, 50vw"
-                  className="object-cover object-center"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-400">
-                  No Image Available
-                </div>
-              )}
-
-              {/* Discount Tag */}
-              {discountPercent > 0 && (
-                <div className="absolute top-4 left-4 z-10 px-3 py-1 rounded-theme-sm bg-themeBadge-discount text-white text-xs font-black shadow-md">
-                  {discountPercent}% OFF
-                </div>
-              )}
-            </div>
-
-            {/* Thumbnail Ribbon */}
-            {product.images?.length > 1 && (
-              <div className="flex items-center space-x-3 overflow-x-auto no-scrollbar py-1">
-                {product.images.map((img, idx) => (
-                  <div
-                    key={idx}
-                    className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-theme-md overflow-hidden bg-white border-2 border-black/10 flex-shrink-0 cursor-pointer hover:border-themePrimary transition-colors"
-                  >
-                    <Image
-                      src={img.image_url}
-                      alt={img.alt_text || ''}
-                      fill
-                      sizes="100px"
-                      className="object-cover"
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
+          {/* Left Column: Interactive Multi-Image Gallery */}
+          <div className="lg:col-span-7">
+            <ProductGallery
+              images={sortedImages}
+              title={product.title}
+              discountPercent={discountPercent}
+            />
           </div>
 
-          {/* Right Column (Product Data & Buy Actions): 5 cols on Desktop */}
+          {/* Right Column: Product Info & Actions */}
           <div className="lg:col-span-5 space-y-5">
             <div className="bg-themeBg-card rounded-theme-xl p-5 sm:p-6 shadow-sm border border-black/[0.06] space-y-4">
               
@@ -303,7 +288,7 @@ export default async function ProductDetailPage({ params }) {
                 </span>
               </div>
 
-              {/* Actions: Proceed to Checkout & Social Share Button */}
+              {/* Actions: Proceed to Buy & Social Share */}
               <div className="space-y-2.5 pt-2">
                 <Link
                   href={`/checkout?slug=${product.slug}`}
@@ -312,7 +297,6 @@ export default async function ProductDetailPage({ params }) {
                   Proceed to Buy ({STORE_INFO.currency}{offerPrice.toLocaleString()})
                 </Link>
 
-                {/* Social Share Trigger */}
                 <ProductShareModal
                   product={product}
                   selectedVariant={primaryVariant}
@@ -324,6 +308,11 @@ export default async function ProductDetailPage({ params }) {
 
         </div>
       </main>
+
+      {/* Mobile Sticky Navigation */}
+      <div className="md:hidden">
+        <BottomNav activeTab="home" />
+      </div>
     </div>
   );
 }

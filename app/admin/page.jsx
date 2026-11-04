@@ -1,6 +1,7 @@
 // app/admin/page.jsx
 'use client';
 import ImageKitUploader from '@/components/ImageKitUploader';
+import MultiImageKitUploader from '@/components/MultiImageKitUploader';
 import { useState, useEffect } from 'react';
 
 export default function AdminDashboard() {
@@ -21,7 +22,7 @@ export default function AdminDashboard() {
         offer_price: '',
         size_label: 'Standard',
         stock_quantity: 10,
-        image_url: '',
+        images: [],
     });
 
     const fetchData = async () => {
@@ -59,12 +60,22 @@ export default function AdminDashboard() {
     // Create Product
     const handleCreateProduct = async (e) => {
         e.preventDefault();
+        if (!productForm.images || productForm.images.length === 0) {
+            alert('Please upload at least one image.');
+            return;
+        }
+        const computedSlug = (productForm.slug || productForm.title)
+            .toLowerCase()
+            .trim()
+            .replace(/[^a-z0-9\s-]/g, '')
+            .replace(/\s+/g, '-');
+
         await fetch('/api/admin/products', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 title: productForm.title,
-                slug: productForm.slug || productForm.title.toLowerCase().replace(/ /g, '-'),
+                slug: computedSlug,
                 description: productForm.description,
                 category: productForm.category,
                 isActive: productForm.isActive,
@@ -79,6 +90,7 @@ export default function AdminDashboard() {
                 images: [{ image_url: productForm.image_url, is_primary: true }],
             }),
         });
+        setProductForm((prev) => ({ ...prev, images: [] }));
         fetchData();
     };
 
@@ -165,17 +177,13 @@ export default function AdminDashboard() {
                                     className="p-3 text-xs border rounded-xl"
                                 />
                                 <div className="sm:col-span-3">
-                                    <ImageKitUploader
+                                    <MultiImageKitUploader
                                         folder="/leu-totes/catalog"
-                                        onUploadSuccess={(url) => {
-                                            setProductForm((prev) => ({ ...prev, image_url: url }));
-                                        }}
+                                        images={productForm.images}
+                                        onChange={(newImages) =>
+                                            setProductForm((prev) => ({ ...prev, images: newImages }))
+                                        }
                                     />
-                                    {productForm.image_url && (
-                                        <p className="text-[10px] text-green-700 font-mono mt-1 truncate">
-                                            ✓ Ready: {productForm.image_url}
-                                        </p>
-                                    )}
                                 </div>
                             </div>
                             <div className="flex items-center justify-between pt-2">
