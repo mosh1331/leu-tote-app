@@ -102,7 +102,10 @@ export async function POST(req) {
         discountAmount = pointsToRedeem; // 1 point = 1 INR
       }
 
-      const finalPayable = Math.max(subtotal - discountAmount, 1);
+      const normalizedState = (state || '').trim().toLowerCase();
+      const shippingCharge = normalizedState === 'kerala' ? 69 : 99;
+
+      const finalPayable = Math.max(subtotal + shippingCharge - discountAmount, 1);
       const pointsEarned = Math.round(finalPayable * (pointsRule.points_per_currency_spent || 0.05));
 
       // 6. Create order record
