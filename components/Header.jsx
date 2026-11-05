@@ -1,8 +1,11 @@
 // components/Header.jsx
 import Link from 'next/link';
 import { STORE_INFO } from '@/lib/data';
+import CartButton from './CartButton';
+
 
 export default function Header({ showBack = false }) {
+ 
   return (
     <header className="sticky top-0 z-40 w-full bg-white/90 backdrop-blur-md border-b border-black/[0.06] transition-all">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-4">
@@ -60,16 +63,7 @@ export default function Header({ showBack = false }) {
             <span>Rewards</span>
           </Link>
 
-          <Link
-            href="/checkout"
-            aria-label="View shopping cart"
-            className="flex items-center space-x-2 h-10 px-3.5 sm:px-4 rounded-theme-md bg-themePrimary hover:bg-themePrimary-hover text-white text-xs sm:text-sm font-semibold shadow-sm transition-all active:scale-95"
-          >
-            <svg className="w-4 h-4 fill-none stroke-current" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-            </svg>
-            <span className="hidden sm:inline">Bag / Cart</span>
-          </Link>
+        <CartButton />
         </div>
       </div>
     </header>

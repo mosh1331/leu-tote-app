@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import MultiImageKitUploader from '@/components/MultiImageKitUploader';
 import ProductDetailModal from './ProductDetailModal';
+import { CATEGORIES, categories } from '@/lib/data';
 
 export default function AdminProductsTab({ products, onRefresh }) {
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -131,9 +132,9 @@ export default function AdminProductsTab({ products, onRefresh }) {
             onChange={(e) => setProductForm({ ...productForm, category: e.target.value })}
             className="p-3 text-xs border rounded-xl"
           >
-            <option value="Totes">Totes</option>
-            <option value="Bucket Bags">Bucket Bags</option>
-            <option value="Shoulder Bags">Shoulder Bags</option>
+          {CATEGORIES.map((cat) => (
+            <option key={cat.id} value={cat.name}>{cat.name}</option>
+          ))}
           </select>
           <input
             type="number"

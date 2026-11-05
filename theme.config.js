@@ -2,7 +2,7 @@
 module.exports = {
   colors: {
     primary: {
-      DEFAULT: '#98A78F', // Charcoal
+      DEFAULT: '#66785b', // Charcoal
       hover: '#1A202C',
       light: '#4A5568',
     },
@@ -24,7 +24,7 @@ module.exports = {
       white: '#FFFFFF',
     },
     badge: {
-      discount: '#E53E3E',
+      discount: '#e89025',
       reward: '#D69E2E',
     }
   },

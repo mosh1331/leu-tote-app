@@ -15,6 +15,7 @@ export default function ProductGrid({ query = '', category = 'all' }) {
     setLoading(true);
     setError(null);
 
+    // const params = new URLSearchParams();
     const params = new URLSearchParams();
     if (query) params.set('q', query);
     if (category && category !== 'all') params.set('cat', category);
