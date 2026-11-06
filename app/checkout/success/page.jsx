@@ -42,7 +42,7 @@ function OrderSuccessContent() {
       <div className="min-h-[60vh] flex flex-col items-center justify-center p-8 text-center space-y-4">
         <h1 className="text-lg font-bold text-themeText-primary">Order Not Found</h1>
         <p className="text-xs text-themeText-secondary">
-          We could not locate this order. Please verify your link or check your email/WhatsApp confirmation[cite: 6, 7].
+          We could not locate this order. Please verify your link or check your email/WhatsApp confirmation.
         </p>
         <Link
           href="/"
@@ -65,8 +65,8 @@ function OrderSuccessContent() {
           Thank you for your order!
         </h1>
         <p className="text-xs text-themeText-secondary max-w-md mx-auto">
-          Your handcrafted bag is reserved[cite: 6, 7]. Confirmation and tracking updates will be sent to{' '}
-          <strong>{order.phone}</strong>[cite: 6, 7].
+          Your handcrafted bag is reserved. Confirmation and tracking updates will be sent to{' '}
+          <strong>{order.phone}</strong>.
         </p>
 
         <div className="pt-2 flex justify-center space-x-3">
@@ -94,7 +94,7 @@ function OrderSuccessContent() {
             <span>{order.points_earned} Leu Points Locked!</span>
           </div>
           <p className="text-xs text-amber-800 leading-relaxed">
-            Because you completed your purchase as a guest using <strong>{order.phone}</strong>, your {order.points_earned} points are waiting[cite: 7]! Sign up with this phone number to convert them into real discounts on your next bag[cite: 5, 7].
+            Because you completed your purchase as a guest using <strong>{order.phone}</strong>, your {order.points_earned} points are waiting! Sign up with this phone number to convert them into real discounts on your next bag.
           </p>
           <Link
             href="/rewards"
@@ -114,7 +114,7 @@ function OrderSuccessContent() {
             <h2 className="text-2xl font-black text-themeText-primary tracking-tight">
               {STORE_INFO.name}
             </h2>
-            <p className="text-[11px] text-gray-500 font-medium">Studio Handcrafted Bags[cite: 6]</p>
+            <p className="text-[11px] text-gray-500 font-medium">Studio Handcrafted Bags</p>
             <p className="text-[10px] text-gray-400 mt-1">GSTIN: 29AAAAA0000A1Z5 · Bengaluru, India</p>
           </div>
           <div className="text-right">
@@ -141,7 +141,7 @@ function OrderSuccessContent() {
           </div>
           <div className="text-right">
             <span className="font-bold text-gray-400 uppercase text-[10px] block mb-1">Payment Method</span>
-            <p className="text-gray-700 font-semibold">UPI / Online Gateway[cite: 4, 6]</p>
+            <p className="text-gray-700 font-semibold">UPI / Online Gateway</p>
             <p className="text-gray-400 text-[10px]">Currency: INR (₹)</p>
           </div>
         </div>
@@ -203,8 +203,8 @@ function OrderSuccessContent() {
 
         {/* Invoice Footer Notice */}
         <div className="border-t pt-4 text-[10px] text-gray-400 text-center space-y-1">
-          <p>This is a computer-generated tax invoice for your handcrafted Leu Tote order[cite: 6, 7].</p>
-          <p>For questions or support, reach out to support@leutote.com or contact us on WhatsApp[cite: 4, 6].</p>
+          <p>This is a computer-generated tax invoice for your handcrafted Leu Tote order.</p>
+          <p>For questions or support, reach out to support@leutote.com or contact us on WhatsApp.</p>
         </div>
 
       </div>

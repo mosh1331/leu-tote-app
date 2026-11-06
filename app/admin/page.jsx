@@ -36,26 +36,30 @@ export default function AdminDashboard() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#F4F5F0] text-gray-900 p-6 sm:p-10 font-sans">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="min-h-screen bg-[#F4F5F0] text-gray-900 p-4 sm:p-8 font-sans">
+      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
         
         {/* Top Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-6 rounded-2xl shadow-sm border border-black/5">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-black/5 gap-3">
           <div>
-            <h1 className="text-2xl font-black text-gray-800">Leu Tote — Backoffice Portal</h1>
-            <p className="text-xs text-gray-500 mt-1">
-              Manage inventory, users, referral tracking, and order fulfillment
+            <h1 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">
+              Leu Tote — Backoffice
+            </h1>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Inventory, users, points, and orders
             </p>
           </div>
-          <div className="flex space-x-2 mt-4 sm:mt-0">
+
+          {/* Navigation Tabs (Horizontal Touch Ribbon on Mobile) */}
+          <div className="flex items-center space-x-1.5 bg-gray-100 p-1 rounded-xl w-full sm:w-auto overflow-x-auto">
             {['products', 'users', 'orders'].map((t) => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
-                className={`px-4 py-2 text-xs font-bold rounded-xl capitalize transition-all ${
+                className={`flex-1 sm:flex-initial px-3 sm:px-4 py-2 text-xs font-bold rounded-lg capitalize transition-all ${
                   tab === t
-                    ? 'bg-[#2D3748] text-white shadow-md'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
                 {t}
@@ -64,9 +68,9 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Tab Views */}
+        {/* Tab Content */}
         {loading && products.length === 0 ? (
-          <div className="text-center py-16 text-gray-400 text-xs font-bold">
+          <div className="text-center py-20 text-gray-400 text-xs font-bold">
             Loading Backoffice Data...
           </div>
         ) : (
