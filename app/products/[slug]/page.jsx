@@ -40,6 +40,7 @@ export async function generateMetadata({ params }) {
       [slug]
     );
     product = res.rows[0];
+    console.log('Metadata fetch product:', product);
   } catch (err) {
     console.error('Metadata fetch error:', err);
   }

@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import MultiImageKitUploader from '@/components/MultiImageKitUploader';
+import { CATEGORIES } from '@/lib/data';
 
 export default function NewProductPage() {
   const router = useRouter();
@@ -134,10 +135,11 @@ export default function NewProductPage() {
                   onChange={(e) => setProductForm({ ...productForm, category: e.target.value })}
                   className="w-full h-11 sm:h-10 px-3 text-base sm:text-xs border border-gray-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition-all"
                 >
-                  <option value="Totes">Totes</option>
-                  <option value="Bucket Bags">Bucket Bags</option>
-                  <option value="Shoulder Bags">Shoulder Bags</option>
-                  <option value="Crossbody">Crossbody</option>
+                {CATEGORIES.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                    </option>
+                ))}
                 </select>
               </div>
 

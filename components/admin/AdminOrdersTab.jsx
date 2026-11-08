@@ -1,5 +1,10 @@
+"use client"
+import { useState } from "react";
+import OrderDetailModal from "./OrderDetailModal";
+
 // components/admin/AdminOrdersTab.jsx
-export default function AdminOrdersTab({ orders }) {
+export default function AdminOrdersTab({ orders,onRefresh }) {
+  const [selectedOrder, setSelectedOrder] = useState(null);
   return (
     <div className="bg-white rounded-2xl border border-black/5 shadow-sm overflow-x-auto">
       <table className="w-full text-left text-xs">
@@ -34,10 +39,26 @@ export default function AdminOrdersTab({ orders }) {
                   {o.status}
                 </span>
               </td>
+              <td className="p-4 text-right">
+            <button
+              type="button"
+              onClick={() => setSelectedOrder(o)}
+              className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold rounded-lg transition-colors active:scale-95"
+            >
+              View Order Details
+            </button>
+          </td>
             </tr>
           ))}
         </tbody>
       </table>
+      {selectedOrder && (
+        <OrderDetailModal
+          order={selectedOrder}
+          onClose={() => setSelectedOrder(null)}
+          onRefresh={onRefresh}
+        />
+      )}
     </div>
   );
 }

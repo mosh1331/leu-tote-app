@@ -45,6 +45,7 @@ export async function GET() {
               'id', pv.id,
               'size_label', pv.size_label,
               'color_label', pv.color_label,
+             'cost_price', COALESCE(pv.cost_price, 0.00),
               'sku', pv.sku,
               'selling_price', pv.selling_price,
               'offer_price', pv.offer_price,
@@ -116,14 +117,13 @@ export async function POST(req) {
       );
       const product = productRes.rows[0];
 
-      // 3. Insert Product Variants
       if (variants.length > 0) {
         for (const v of variants) {
           const sku = v.sku || `SKU-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
           await client.query(
             `INSERT INTO product_variants 
-             (product_id, size_label, color_label, sku, selling_price, offer_price, stock_quantity, is_active)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, TRUE)`,
+         (product_id, size_label, color_label, sku, selling_price, offer_price, cost_price, stock_quantity, is_active)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, TRUE)`,
             [
               product.id,
               v.size_label || 'Standard',
@@ -131,50 +131,51 @@ export async function POST(req) {
               sku,
               Number(v.selling_price) || 0,
               Number(v.offer_price) || 0,
+              Number(v.cost_price) || 0, // <-- Added cost_price
               Number(v.stock_quantity) || 0,
             ]
           );
         }
-      } else {
-        // Fallback default variant if not supplied
-        await client.query(
-          `INSERT INTO product_variants 
+    } else {
+      // Fallback default variant if not supplied
+      await client.query(
+        `INSERT INTO product_variants 
            (product_id, size_label, sku, selling_price, offer_price, stock_quantity, is_active)
            VALUES ($1, 'Standard', $2, 0, 0, 0, TRUE)`,
-          [product.id, `SKU-${Date.now()}`]
-        );
-      }
+        [product.id, `SKU-${Date.now()}`]
+      );
+    }
 
       // 4. Insert Images (Storing file_id for CDN cleanup)
       if (images.length > 0) {
-        for (let i = 0; i < images.length; i++) {
-          const img = images[i];
-          if (img?.image_url) {
-            await client.query(
-              `INSERT INTO product_images 
+      for (let i = 0; i < images.length; i++) {
+        const img = images[i];
+        if (img?.image_url) {
+          await client.query(
+            `INSERT INTO product_images 
                (product_id, image_url, file_id, alt_text, display_order, is_primary)
                VALUES ($1, $2, $3, $4, $5, $6)`,
-              [
-                product.id,
-                img.image_url,
-                img.file_id || null,
-                img.alt_text || product.title,
-                i,
-                Boolean(img.is_primary ?? i === 0),
-              ]
-            );
-          }
+            [
+              product.id,
+              img.image_url,
+              img.file_id || null,
+              img.alt_text || product.title,
+              i,
+              Boolean(img.is_primary ?? i === 0),
+            ]
+          );
         }
       }
+    }
 
-      return product;
-    });
+    return product;
+  });
 
-    return NextResponse.json({ success: true, product: result }, { status: 201 });
-  } catch (error) {
-    console.error('[ADMIN PRODUCTS POST] Error:', error);
-    return NextResponse.json({ error: error.message || 'Failed to create product' }, { status: 500 });
-  }
+  return NextResponse.json({ success: true, product: result }, { status: 201 });
+} catch (error) {
+  console.error('[ADMIN PRODUCTS POST] Error:', error);
+  return NextResponse.json({ error: error.message || 'Failed to create product' }, { status: 500 });
+}
 }
 
 // ==============================================================================
