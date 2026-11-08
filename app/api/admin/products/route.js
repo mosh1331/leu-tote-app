@@ -222,15 +222,16 @@ export async function PUT(req) {
           const sku = v.sku || `SKU-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
           await client.query(
             `INSERT INTO product_variants 
-             (product_id, size_label, color_label, sku, selling_price, offer_price, stock_quantity, is_active)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, TRUE)`,
+     (product_id, size_label, color_label, sku, selling_price, offer_price, cost_price, stock_quantity, is_active)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, TRUE)`,
             [
-              id,
+              productId,
               v.size_label || 'Standard',
               v.color_label || null,
               sku,
               Number(v.selling_price) || 0,
               Number(v.offer_price) || 0,
+              Number(v.cost_price) || 0, // Persist COGS
               Number(v.stock_quantity) || 0,
             ]
           );

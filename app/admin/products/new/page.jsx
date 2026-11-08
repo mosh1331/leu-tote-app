@@ -17,9 +17,15 @@ export default function NewProductPage() {
     isActive: true,
     selling_price: '',
     offer_price: '',
+    cost_price: '',
     stock_quantity: 10,
     images: [],
   });
+
+  const offer = Number(productForm.offer_price) || 0;
+  const cost = Number(productForm.cost_price) || 0;
+  const grossProfit = offer - cost;
+  const marginPercent = offer > 0 ? Math.round((grossProfit / offer) * 100) : 0;
 
   const handleCreateProduct = async (e) => {
     e.preventDefault();
@@ -51,6 +57,7 @@ export default function NewProductPage() {
               color_label: null,
               selling_price: Number(productForm.selling_price),
               offer_price: Number(productForm.offer_price),
+              cost_price: Number(productForm.cost_price) || 0,
               stock_quantity: Number(productForm.stock_quantity),
             },
           ],
@@ -73,10 +80,10 @@ export default function NewProductPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F4F5F0] text-gray-900 p-4 sm:p-8 font-sans">
+    <div className="min-h-screen bg-themeBg-canvas text-themeText-primary p-4 sm:p-8 font-sans">
       <div className="max-w-2xl mx-auto space-y-4">
         
-        {/* Top Navigation */}
+        {/* Navigation */}
         <div className="flex items-center justify-between">
           <Link
             href="/admin"
@@ -88,22 +95,21 @@ export default function NewProductPage() {
           <span className="text-xs font-semibold text-gray-500">Leu Tote Studio</span>
         </div>
 
-        {/* Creation Card */}
+        {/* Form Container */}
         <form
           onSubmit={handleCreateProduct}
-          className="bg-white rounded-2xl p-5 sm:p-8 border border-black/5 shadow-sm space-y-5"
+          className="bg-white rounded-theme-xl p-5 sm:p-8 border border-black/5 shadow-sm space-y-5"
         >
           <div>
-            <h1 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-black text-themeText-primary tracking-tight">
               Add New Bag
             </h1>
-            <p className="text-xs text-gray-500 mt-0.5">
-              Enter bag pricing, stock, and upload studio photos.
+            <p className="text-xs text-themeText-secondary mt-0.5">
+              Enter product details, manufacturing cost, and upload studio photos.
             </p>
           </div>
 
           <div className="space-y-4">
-            {/* Title - text-base prevents iOS zoom */}
             <div>
               <label className="text-xs font-bold text-gray-700 block mb-1">
                 Bag Title *
@@ -118,7 +124,6 @@ export default function NewProductPage() {
               />
             </div>
 
-            {/* Category & Slug Row */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
                 <label className="text-xs font-bold text-gray-700 block mb-1">
@@ -150,11 +155,11 @@ export default function NewProductPage() {
               </div>
             </div>
 
-            {/* Pricing & Stock Row */}
-            <div className="grid grid-cols-3 gap-2.5 sm:gap-4">
+            {/* Pricing, Cost & Stock Row */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
               <div>
                 <label className="text-xs font-bold text-gray-700 block mb-1 truncate">
-                  MRP (₹) *
+                  Selling MRP (₹) *
                 </label>
                 <input
                   type="number"
@@ -169,7 +174,7 @@ export default function NewProductPage() {
 
               <div>
                 <label className="text-xs font-bold text-gray-700 block mb-1 truncate">
-                  Offer (₹) *
+                  Offer Price (₹) *
                 </label>
                 <input
                   type="number"
@@ -178,6 +183,21 @@ export default function NewProductPage() {
                   value={productForm.offer_price}
                   onChange={(e) => setProductForm({ ...productForm, offer_price: e.target.value })}
                   className="w-full h-11 sm:h-10 px-3 text-base sm:text-xs border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition-all bg-white"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-emerald-800 block mb-1 truncate">
+                  Cost Price (₹) *
+                </label>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  placeholder="750"
+                  value={productForm.cost_price}
+                  onChange={(e) => setProductForm({ ...productForm, cost_price: e.target.value })}
+                  className="w-full h-11 sm:h-10 px-3 text-base sm:text-xs border border-emerald-300 bg-emerald-50/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition-all font-semibold"
                   required
                 />
               </div>
@@ -198,21 +218,35 @@ export default function NewProductPage() {
               </div>
             </div>
 
-            {/* Description */}
+            {/* Profit Margin Preview */}
+            {(productForm.offer_price || productForm.cost_price) && (
+              <div
+                className={`p-3 rounded-xl border text-xs font-semibold flex items-center justify-between transition-all ${
+                  grossProfit >= 0
+                    ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                    : 'bg-red-50 border-red-200 text-red-900'
+                }`}
+              >
+                <span>Estimated Gross Profit per Unit:</span>
+                <span className="font-extrabold font-mono text-sm">
+                  {grossProfit >= 0 ? '+' : ''}₹{grossProfit.toLocaleString()} ({marginPercent}% margin)
+                </span>
+              </div>
+            )}
+
             <div>
               <label className="text-xs font-bold text-gray-700 block mb-1">
-                Description &amp; Specifications
+                Description
               </label>
               <textarea
                 rows={3}
-                placeholder="Handcrafted organic canvas, antique brass hardware, inner compartments..."
+                placeholder="Product description, stitching details, and fabric specs..."
                 value={productForm.description}
                 onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
                 className="w-full p-3 text-base sm:text-xs border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition-all bg-white"
               />
             </div>
 
-            {/* Multi-ImageKit Uploader with anti-zoom padding */}
             <div className="pt-2 border-t border-black/5">
               <MultiImageKitUploader
                 folder="/leu-totes/catalog"
@@ -223,7 +257,6 @@ export default function NewProductPage() {
               />
             </div>
 
-            {/* Publish Toggle */}
             <div className="pt-2 border-t border-black/5">
               <label className="flex items-center space-x-3 cursor-pointer py-1">
                 <input
@@ -239,7 +272,6 @@ export default function NewProductPage() {
             </div>
           </div>
 
-          {/* Action Buttons */}
           <div className="pt-4 border-t border-black/5 flex items-center justify-end space-x-3">
             <Link
               href="/admin"
@@ -250,7 +282,7 @@ export default function NewProductPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="px-6 py-3 bg-[#2D3748] hover:bg-black text-white text-xs sm:text-sm font-bold rounded-xl shadow-md disabled:opacity-50 active:scale-95 transition-all"
+              className="px-6 py-3 bg-themePrimary hover:bg-black text-white text-xs sm:text-sm font-bold rounded-xl shadow-md disabled:opacity-50 active:scale-95 transition-all"
             >
               {submitting ? 'Saving...' : 'Save Product'}
             </button>
