@@ -1,6 +1,7 @@
 // app/api/orders/create/route.js
 import { NextResponse } from 'next/server';
 import { withTransaction, getDb } from '@/lib/db';
+import { sendOrderAdminAlert } from '@/lib/ntfy';
 
 export async function POST(req) {
   try {

@@ -3,7 +3,6 @@ import { ImageResponse } from 'next/og';
 import { getDb } from '@/lib/db';
 import { STORE_INFO } from '@/lib/data';
 
-// 1. Use 'nodejs' runtime so standard PostgreSQL/Neon connections work
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const alt = 'Leu Tote Product Preview';
@@ -11,7 +10,6 @@ export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
 export default async function Image({ params }) {
-  // Await params for Next.js 15+ compatibility
   const resolvedParams = await params;
   const slug = resolvedParams?.slug;
 
@@ -25,6 +23,7 @@ export default async function Image({ params }) {
           p.id, 
           p.title, 
           p.description,
+          p.category,
           COALESCE(
             json_agg(DISTINCT pv.*) FILTER (WHERE pv.id IS NOT NULL), 
             '[]'
@@ -47,17 +46,11 @@ export default async function Image({ params }) {
     }
   }
 
-  // Fallbacks if not found
-  const title = product?.title || 'Handcrafted Artisan Bag';
+  const title = product?.title || 'Handcrafted Artisan Tote';
   const primaryVariant = product?.variants?.[0] || {};
-  const offerPrice = Number(primaryVariant.offer_price || 2200);
-  const sellingPrice = Number(primaryVariant.selling_price || offerPrice);
-  const discountPercent =
-    sellingPrice > offerPrice
-      ? Math.round(((sellingPrice - offerPrice) / sellingPrice) * 100)
-      : 0;
+  const offerPrice = Number(primaryVariant.offer_price || 2100);
 
-  // Primary image or first image from the array
+  // Sort images to prioritize the primary cover photo
   const sortedImages = [...(product?.images || [])].sort((a, b) => {
     if (a.is_primary) return -1;
     if (b.is_primary) return 1;
@@ -75,148 +68,164 @@ export default async function Image({ params }) {
           width: '100%',
           height: '100%',
           display: 'flex',
-          backgroundColor: '#98A78F', // themeBg.screen
-          padding: '40px',
+          position: 'relative',
+          backgroundColor: '#1A202C',
           alignItems: 'center',
           justifyContent: 'center',
           fontFamily: 'sans-serif',
         }}
       >
-        <div
+        {/* Full-bleed ~90% Product Showcase Photo */}
+        <img
+          src={imageUrl}
+          alt={title}
           style={{
-            display: 'flex',
+            position: 'absolute',
+            top: 0,
+            left: 0,
             width: '100%',
             height: '100%',
-            backgroundColor: '#FFFFFF',
-            borderRadius: '28px',
-            overflow: 'hidden',
-            boxShadow: '0 20px 40px rgba(0,0,0,0.15)',
+            objectFit: 'cover',
+          }}
+        />
+
+        {/* Ambient Dark Gradient Overlay */}
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            backgroundImage:
+              'linear-gradient(to top, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.45) 45%, rgba(0, 0, 0, 0.2) 100%)',
+          }}
+        />
+
+        {/* Top Floating Badge */}
+        <div
+          style={{
+            position: 'absolute',
+            top: 36,
+            left: 44,
+            display: 'flex',
+            alignItems: 'center',
+            backgroundColor: 'rgba(255, 255, 255, 0.92)',
+            padding: '8px 18px',
+            borderRadius: '100px',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
           }}
         >
-          {/* Left: Product Hero Photo */}
-          <div
+          <span
             style={{
-              width: '48%',
-              height: '100%',
-              display: 'flex',
-              backgroundColor: '#F8F9FA',
+              fontSize: 14,
+              fontWeight: 800,
+              textTransform: 'uppercase',
+              color: '#1A202C',
+              letterSpacing: '1.5px',
             }}
           >
-            <img
-              src={imageUrl}
-              alt={title}
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-            />
-          </div>
+            {STORE_INFO.name} · Studio Handcrafted
+          </span>
+        </div>
 
-          {/* Right: Dynamic Offer Card */}
+        {/* Bottom Information Container */}
+        <div
+          style={{
+            position: 'absolute',
+            bottom: 36,
+            left: 44,
+            right: 44,
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
           <div
             style={{
-              width: '52%',
-              height: '100%',
               display: 'flex',
-              flexDirection: 'column',
+              alignItems: 'flex-end',
               justifyContent: 'space-between',
-              padding: '50px 45px',
+              marginBottom: 16,
             }}
           >
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span
-                style={{
-                  fontSize: 18,
-                  fontWeight: 700,
-                  textTransform: 'uppercase',
-                  color: '#718096',
-                  letterSpacing: '2px',
-                }}
-              >
-                {STORE_INFO.name} · Studio Handcrafted
-              </span>
-
+            {/* Bag Title */}
+            <div style={{ display: 'flex', flexDirection: 'column', maxWidth: '72%' }}>
               <h1
                 style={{
-                  fontSize: 38,
-                  fontWeight: 800,
-                  color: '#1A202C',
-                  marginTop: 12,
-                  lineHeight: 1.2,
+                  fontSize: 44,
+                  fontWeight: 900,
+                  color: '#FFFFFF',
+                  margin: 0,
+                  lineHeight: 1.15,
+                  textShadow: '0 4px 12px rgba(0, 0, 0, 0.5)',
                 }}
               >
                 {title}
               </h1>
-
-              {/* Dynamic Prices */}
-              <div style={{ display: 'flex', alignItems: 'baseline', marginTop: 20, gap: '16px' }}>
-                <span
-                  style={{
-                    fontSize: 46,
-                    fontWeight: 900,
-                    color: '#1A202C',
-                  }}
-                >
-                  ₹{offerPrice.toLocaleString()}
-                </span>
-                {sellingPrice > offerPrice && (
-                  <span
-                    style={{
-                      fontSize: 26,
-                      color: '#A0AEC0',
-                      textDecoration: 'line-through',
-                    }}
-                  >
-                    ₹{sellingPrice.toLocaleString()}
-                  </span>
-                )}
-                {discountPercent > 0 && (
-                  <span
-                    style={{
-                      backgroundColor: '#E53E3E',
-                      color: '#FFFFFF',
-                      fontSize: 16,
-                      fontWeight: 800,
-                      padding: '4px 12px',
-                      borderRadius: '8px',
-                    }}
-                  >
-                    SAVE {discountPercent}%
-                  </span>
-                )}
-              </div>
             </div>
 
-            {/* Bottom Reward Pill */}
+            {/* Price Badge (Offer Price Only) */}
             <div
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                backgroundColor: '#F4F5F0',
-                padding: '16px 20px',
-                borderRadius: '16px',
-                border: '1px solid #E9EBE5',
-                justifyContent: 'space-between',
+                backgroundColor: '#FFFFFF',
+                padding: '12px 28px',
+                borderRadius: '18px',
+                boxShadow: '0 10px 25px rgba(0,0,0,0.3)',
               }}
             >
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontSize: 13, color: '#4A5568', fontWeight: 600 }}>
-                  Customer Rewards Active
-                </span>
-                <span style={{ fontSize: 16, color: '#D69E2E', fontWeight: 800 }}>
-                  + Earn Points on This Order
-                </span>
-              </div>
-              <div
+              <span
                 style={{
-                  backgroundColor: '#25D366',
-                  color: 'white',
-                  padding: '8px 16px',
-                  borderRadius: '20px',
-                  fontSize: 15,
-                  fontWeight: 700,
+                  fontSize: 42,
+                  fontWeight: 900,
+                  color: '#1A202C',
+                  letterSpacing: '-1px',
                 }}
               >
-                Shop via WhatsApp
-              </div>
+                ₹{offerPrice.toLocaleString()}
+              </span>
             </div>
+          </div>
+
+          {/* Shipping Offer Pill */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              backgroundColor: 'rgba(255, 255, 255, 0.15)',
+              border: '1px solid rgba(255, 255, 255, 0.25)',
+              padding: '10px 22px',
+              borderRadius: '12px',
+              width: '100%',
+              justifyContent: 'space-between',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <span
+                style={{
+                  fontSize: 16,
+                  fontWeight: 700,
+                  color: '#FFFFFF',
+                  letterSpacing: '0.4px',
+                }}
+              >
+                🚚 All Kerala shipping @ ₹69 only | All India @ ₹99
+              </span>
+            </div>
+{/* 
+            <span
+              style={{
+                fontSize: 14,
+                fontWeight: 800,
+                color: '#68D391',
+                textTransform: 'uppercase',
+                letterSpacing: '1px',
+              }}
+            >
+              GRAB YOURS NOW ↗
+            </span> */}
           </div>
         </div>
       </div>
