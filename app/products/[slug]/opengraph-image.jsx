@@ -3,44 +3,69 @@ import { ImageResponse } from 'next/og';
 import { getDb } from '@/lib/db';
 import { STORE_INFO } from '@/lib/data';
 
-export const runtime = 'edge';
+// 1. Use 'nodejs' runtime so standard PostgreSQL/Neon connections work
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 export const alt = 'Leu Tote Product Preview';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
 export default async function Image({ params }) {
-  const { slug } = params;
+  // Await params for Next.js 15+ compatibility
+  const resolvedParams = await params;
+  const slug = resolvedParams?.slug;
+
   let product = null;
 
-  try {
-    const db = getDb();
-    const res = await db.query(
-      `SELECT p.id, p.title, p.description,
-              COALESCE(json_agg(DISTINCT pv.*) FILTER (WHERE pv.id IS NOT NULL), '[]') AS variants,
-              COALESCE(json_agg(DISTINCT pi.*) FILTER (WHERE pi.id IS NOT NULL), '[]') AS images
-       FROM products p
-       LEFT JOIN product_variants pv ON pv.product_id = p.id AND pv.is_active = TRUE
-       LEFT JOIN product_images pi ON pi.product_id = p.id
-       WHERE p.slug = $1 AND p.is_active = TRUE
-       GROUP BY p.id LIMIT 1;`,
-      [slug]
-    );
-    product = res.rows[0];
-  } catch (e) {
-    // Fallback if DB is unavailable at compile time
+  if (slug) {
+    try {
+      const db = getDb();
+      const res = await db.query(
+        `SELECT 
+          p.id, 
+          p.title, 
+          p.description,
+          COALESCE(
+            json_agg(DISTINCT pv.*) FILTER (WHERE pv.id IS NOT NULL), 
+            '[]'
+          ) AS variants,
+          COALESCE(
+            json_agg(DISTINCT pi.*) FILTER (WHERE pi.id IS NOT NULL), 
+            '[]'
+          ) AS images
+         FROM products p
+         LEFT JOIN product_variants pv ON pv.product_id = p.id AND pv.is_active = TRUE
+         LEFT JOIN product_images pi ON pi.product_id = p.id
+         WHERE p.slug = $1 AND p.is_active = TRUE
+         GROUP BY p.id 
+         LIMIT 1;`,
+        [slug]
+      );
+      product = res.rows[0];
+    } catch (e) {
+      console.error('[OG Image Generation DB Error]:', e);
+    }
   }
 
+  // Fallbacks if not found
   const title = product?.title || 'Handcrafted Artisan Bag';
   const primaryVariant = product?.variants?.[0] || {};
   const offerPrice = Number(primaryVariant.offer_price || 2200);
-  const sellingPrice = Number(primaryVariant.selling_price || 2250);
+  const sellingPrice = Number(primaryVariant.selling_price || offerPrice);
   const discountPercent =
     sellingPrice > offerPrice
       ? Math.round(((sellingPrice - offerPrice) / sellingPrice) * 100)
       : 0;
 
+  // Primary image or first image from the array
+  const sortedImages = [...(product?.images || [])].sort((a, b) => {
+    if (a.is_primary) return -1;
+    if (b.is_primary) return 1;
+    return (a.display_order || 0) - (b.display_order || 0);
+  });
+
   const imageUrl =
-    product?.images?.[0]?.image_url ||
+    sortedImages[0]?.image_url ||
     'https://images.unsplash.com/photo-1590874103328-eac38a683ce7?w=1200&auto=format&fit=crop&q=80';
 
   return new ImageResponse(
@@ -62,7 +87,7 @@ export default async function Image({ params }) {
             display: 'flex',
             width: '100%',
             height: '100%',
-            backgroundColor: '#FFFFFF', // themeBg.card
+            backgroundColor: '#FFFFFF',
             borderRadius: '28px',
             overflow: 'hidden',
             boxShadow: '0 20px 40px rgba(0,0,0,0.15)',
@@ -101,7 +126,7 @@ export default async function Image({ params }) {
                   fontSize: 18,
                   fontWeight: 700,
                   textTransform: 'uppercase',
-                  color: '#718096', // themeText.secondary
+                  color: '#718096',
                   letterSpacing: '2px',
                 }}
               >
@@ -112,7 +137,7 @@ export default async function Image({ params }) {
                 style={{
                   fontSize: 38,
                   fontWeight: 800,
-                  color: '#1A202C', // themeText.primary
+                  color: '#1A202C',
                   marginTop: 12,
                   lineHeight: 1.2,
                 }}
@@ -145,7 +170,7 @@ export default async function Image({ params }) {
                 {discountPercent > 0 && (
                   <span
                     style={{
-                      backgroundColor: '#E53E3E', // themeBadge.discount
+                      backgroundColor: '#E53E3E',
                       color: '#FFFFFF',
                       fontSize: 16,
                       fontWeight: 800,
