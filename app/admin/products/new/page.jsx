@@ -25,6 +25,19 @@ export default function NewProductPage() {
 
   const offer = Number(productForm.offer_price) || 0;
   const cost = Number(productForm.cost_price) || 0;
+
+  // Tax & Gateway Deductions (Assuming standard 5% inclusive GST + 2% Razorpay with 18% GST)
+  const GST_RATE = 0.05;
+  const taxableBase = offer > 0 ? offer / (1 + GST_RATE) : 0;
+  const gstAmount = offer - taxableBase;
+
+  // Razorpay 2% + 18% GST on fee = 2.36% of gross value
+  const rzpFeeTotal = offer * 0.02 * 1.18;
+
+  // True Realized Payout into Bank
+  const netBankPayout = offer > 0 ? offer - gstAmount - rzpFeeTotal : 0;
+  const netRealizedProfit = netBankPayout - cost;
+  const trueMarginPercent = offer > 0 ? Math.round((netRealizedProfit / offer) * 100) : 0;
   const grossProfit = offer - cost;
   const marginPercent = offer > 0 ? Math.round((grossProfit / offer) * 100) : 0;
 
@@ -83,7 +96,7 @@ export default function NewProductPage() {
   return (
     <div className="min-h-screen bg-themeBg-canvas text-themeText-primary p-4 sm:p-8 font-sans">
       <div className="max-w-2xl mx-auto space-y-4">
-        
+
         {/* Navigation */}
         <div className="flex items-center justify-between">
           <Link
@@ -135,11 +148,11 @@ export default function NewProductPage() {
                   onChange={(e) => setProductForm({ ...productForm, category: e.target.value })}
                   className="w-full h-11 sm:h-10 px-3 text-base sm:text-xs border border-gray-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition-all"
                 >
-                {CATEGORIES.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name}
+                  {CATEGORIES.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
                     </option>
-                ))}
+                  ))}
                 </select>
               </div>
 
@@ -220,19 +233,42 @@ export default function NewProductPage() {
               </div>
             </div>
 
-            {/* Profit Margin Preview */}
+            {/* Dynamic Net In-Hand & Profit Breakdown Card */}
             {(productForm.offer_price || productForm.cost_price) && (
               <div
-                className={`p-3 rounded-xl border text-xs font-semibold flex items-center justify-between transition-all ${
-                  grossProfit >= 0
-                    ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
-                    : 'bg-red-50 border-red-200 text-red-900'
-                }`}
+                className={`p-4 rounded-xl border text-xs space-y-2 transition-all ${netRealizedProfit >= 0
+                    ? 'bg-emerald-50/80 border-emerald-200 text-emerald-950'
+                    : 'bg-red-50 border-red-200 text-red-950'
+                  }`}
               >
-                <span>Estimated Gross Profit per Unit:</span>
-                <span className="font-extrabold font-mono text-sm">
-                  {grossProfit >= 0 ? '+' : ''}₹{grossProfit.toLocaleString()} ({marginPercent}% margin)
-                </span>
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-black uppercase tracking-wider text-emerald-800">
+                    Estimated Bank Settlement &amp; Net Profit
+                  </span>
+                  <span className="font-extrabold font-mono text-sm">
+                    Net Profit: {netRealizedProfit >= 0 ? '+' : ''}₹{netRealizedProfit.toFixed(2)} ({trueMarginPercent}% margin)
+                  </span>
+                </div>
+
+                {/* Breakdown Grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-emerald-200/60 text-[11px]">
+                  <div>
+                    <span className="text-gray-500 block">Offer Price:</span>
+                    <strong className="text-gray-900 font-mono">₹{offer.toLocaleString()}</strong>
+                  </div>
+                  <div>
+                    <span className="text-gray-500 block">GST Output (5% incl):</span>
+                    <strong className="text-amber-800 font-mono">-₹{gstAmount.toFixed(2)}</strong>
+                  </div>
+                  <div>
+                    <span className="text-gray-500 block">Razorpay (2.36%):</span>
+                    <strong className="text-red-700 font-mono">-₹{rzpFeeTotal.toFixed(2)}</strong>
+                  </div>
+                  <div>
+                    <span className="text-gray-500 block">Net Bank In-Hand:</span>
+                    <strong className="text-emerald-800 font-mono">₹{netBankPayout.toFixed(2)}</strong>
+                  </div>
+                </div>
               </div>
             )}
 
