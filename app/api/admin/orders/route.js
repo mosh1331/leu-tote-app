@@ -89,14 +89,25 @@ export async function PATCH(req) {
       if (orderRes.rowCount === 0) throw new Error('Order not found');
 
       // 2. Fetch customer details with fallback to address phone
+      // const userRes = await client.query(
+      //   `SELECT 
+      //      COALESCE(u.phone, a.phone) AS phone,
+      //      COALESCE(u.full_name, a.recipient_name, 'Valued Customer') AS full_name
+      //    FROM orders o
+      //    LEFT JOIN users u ON u.id = o.user_id
+      //    LEFT JOIN addresses a ON a.id = o.shipping_address_id
+      //    WHERE o.id = $1`,
+      //   [orderId]
+      // );
       const userRes = await client.query(
         `SELECT 
-           COALESCE(u.phone, a.phone) AS phone,
-           COALESCE(u.full_name, a.recipient_name, 'Valued Customer') AS full_name
-         FROM orders o
-         LEFT JOIN users u ON u.id = o.user_id
-         LEFT JOIN addresses a ON a.id = o.shipping_address_id
-         WHERE o.id = $1`,
+     COALESCE(u.phone, a.phone) AS phone,
+     COALESCE(u.full_name, a.recipient_name, 'Valued Customer') AS full_name,
+     COALESCE(o.points_earned, 0) AS points_earned
+   FROM orders o
+   LEFT JOIN users u ON u.id = o.user_id
+   LEFT JOIN addresses a ON a.id = o.shipping_address_id
+   WHERE o.id = $1`,
         [orderId]
       );
       const user = userRes.rows[0];
@@ -114,6 +125,16 @@ export async function PATCH(req) {
         console.warn(`[WHATSAPP SKIPPED] No phone number associated with Order #${orderId}`);
       } else {
         try {
+          const data = {
+            toPhone: recipientPhone,
+            customerName: result.user.full_name,
+            orderId,
+            courierName: courierName || 'India Post / BlueDart / Delhivery',
+            trackingId: trackingId || 'N/A',
+            trackingUrl,
+            pointsEarned: result.user.points_earned,
+          }
+          console.log('[WHATSAPP PAYLOAD]:', JSON.stringify(data, null, 2));
           whatsappResult = await sendOrderShippedWhatsApp({
             toPhone: recipientPhone,
             customerName: result.user.full_name,
@@ -121,7 +142,9 @@ export async function PATCH(req) {
             courierName: courierName || 'India Post / BlueDart / Delhivery',
             trackingId: trackingId || 'N/A',
             trackingUrl,
+            pointsEarned: result.user.points_earned,
           });
+
 
           console.log('[WHATSAPP DISPATCH RESULT]:', JSON.stringify(whatsappResult, null, 2));
 
@@ -146,10 +169,10 @@ export async function PATCH(req) {
     }
 
     // Return detailed feedback to the admin client
-    return NextResponse.json({ 
-      success: true, 
-      status, 
-      whatsapp: whatsappResult 
+    return NextResponse.json({
+      success: true,
+      status,
+      whatsapp: whatsappResult
     });
 
   } catch (err) {

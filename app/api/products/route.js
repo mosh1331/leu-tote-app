@@ -5,8 +5,9 @@ import { getDb } from '@/lib/db';
 export const dynamic = 'force-dynamic';
 
 export async function GET(req) {
-  const db = getDb();
   try {
+  const db = getDb();
+
     const { searchParams } = new URL(req.url);
     const category = searchParams.get('cat');
     const query = searchParams.get('q');
@@ -56,6 +57,7 @@ export async function GET(req) {
     const res = await db.query(sql, params);
     return NextResponse.json({ products: res.rows });
   } catch (err) {
+    console.error('[Product Fetch Error]:', err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

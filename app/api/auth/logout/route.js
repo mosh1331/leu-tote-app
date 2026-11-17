@@ -1,0 +1,12 @@
+// app/api/auth/logout/route.js
+import { NextResponse } from 'next/server';
+
+export async function POST() {
+  const response = NextResponse.json({ success: true });
+  response.cookies.set('leu_user_session', '', {
+    httpOnly: true,
+    path: '/',
+    maxAge: 0,
+  });
+  return response;
+}

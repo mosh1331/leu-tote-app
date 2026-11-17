@@ -8,7 +8,7 @@ export default function OrderItemsTable({ items = [] }) {
         <h3 className="text-xs font-bold uppercase tracking-wider text-themeText-secondary">
           Purchased Bags ({items.length})
         </h3>
-        <span className="text-[11px] text-gray-400">Unit Cost &amp; Gross Margin Breakdown[cite: 1]</span>
+        <span className="text-[11px] text-gray-400">Unit Cost &amp; Gross Margin Breakdown</span>
       </div>
 
       <div className="overflow-x-auto">

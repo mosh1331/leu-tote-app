@@ -226,7 +226,7 @@ export default function AdminRevenueTab({ products = [], onRefresh }) {
               Recent Offline / Exhibition Sales
             </h3>
             <p className="text-xs text-gray-400 mt-0.5">
-              Live transactions recorded from booths, flea markets, and studio visits[cite: 1].
+              Live transactions recorded from booths, flea markets, and studio visits.
             </p>
           </div>
           <button

@@ -73,6 +73,7 @@ export default function OrderDetailModal({ order, onClose, onRefresh }) {
     }
     if (status === 'SHIPPED') {
       return [
+        { value: 'PAID', label: 'PAID (Current)' },
         { value: 'SHIPPED', label: 'SHIPPED (In Transit)' },
         { value: 'DELIVERED', label: 'Mark as DELIVERED' },
         { value: 'RETURNED', label: 'Mark as RETURNED' },

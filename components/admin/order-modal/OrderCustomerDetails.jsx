@@ -42,7 +42,7 @@ export default function OrderCustomerDetails({ order, isOffline }) {
         {isOffline ? (
           <div className="text-xs text-gray-500 py-3 space-y-1">
             <p className="font-bold text-gray-800">Direct In-Person Fulfillment</p>
-            <p>Pop-up / Exhibition studio counter sale[cite: 1].</p>
+            <p>Pop-up / Exhibition studio counter sale.</p>
             {order.offline_notes && (
               <p className="p-2 bg-amber-50 rounded text-amber-800 text-[11px] mt-2 font-medium">
                 Notes: {order.offline_notes}

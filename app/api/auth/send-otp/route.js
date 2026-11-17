@@ -50,6 +50,7 @@ export async function POST(req) {
       success: true,
       message: 'Verification code sent via WhatsApp',
     });
+    
   } catch (error) {
     console.error('Send Auth OTP Error:', error);
     return NextResponse.json({ error: error.message || 'Failed to send OTP' }, { status: 500 });
