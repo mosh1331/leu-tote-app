@@ -9,8 +9,15 @@ export const metadata = {
     default: `${STORE_INFO.name} | Handcrafted Bags & Utility Totes`,
     template: `%s | ${STORE_INFO.name}`,
   },
+   icons: {
+    icon: [
+      { url: "/icon.png", type: "image/png" },
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+    apple: "/apple-icon.png",
+  },
   description: STORE_INFO.tagline,
-  keywords: ["handmade tote bags", "leather bucket bag", "artisan totes", "leu tote"],
+  keywords: ["handmade tote bags", "mother bag", "artisan totes", "leu tote","handmade bags","utility bags"],
 };
 
 export default function RootLayout({ children }) {

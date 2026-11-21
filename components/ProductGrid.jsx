@@ -1,110 +1,198 @@
 // components/ProductGrid.jsx
 'use client';
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
+import { useState, useEffect, useMemo } from 'react';
 import ProductCard from '@/components/ProductCard';
 
-export default function ProductGrid({ query = '', category = 'all' }) {
+export default function ProductGrid({
+  query = '',
+  category = 'all',
+  itemsPerPage = 20,
+  onPageChange,
+}) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
+  // Fetch active catalog products
   useEffect(() => {
     let isMounted = true;
     setLoading(true);
-    setError(null);
 
-    // const params = new URLSearchParams();
-    const params = new URLSearchParams();
-    if (query) params.set('q', query);
-    if (category && category !== 'all') params.set('cat', category);
-
-    fetch(`/api/products?${params.toString()}`)
-      .then(async (res) => {
-        if (!res.ok) {
-          throw new Error('Failed to load bags catalog.');
-        }
-        return res.json();
-      })
+    fetch('/api/products')
+      .then((res) => res.json())
       .then((data) => {
         if (isMounted) {
           setProducts(data.products || []);
-          setLoading(false);
         }
       })
-      .catch((err) => {
-        if (isMounted) {
-          setError(err.message || 'Something went wrong');
-          setLoading(false);
-        }
+      .catch((err) => console.error('Failed to load catalog:', err))
+      .finally(() => {
+        if (isMounted) setLoading(false);
       });
 
     return () => {
       isMounted = false;
     };
+  }, []);
+
+  // Reset to page 1 whenever filters or search query change
+  useEffect(() => {
+    setCurrentPage(1);
   }, [query, category]);
 
-  // 1. Loading Skeleton State
+  // Filter products by category & search query
+  const filteredProducts = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const cat = category.trim().toLowerCase();
+
+    return products.filter((product) => {
+      const matchesCategory =
+        cat === 'all' || (product.category || '').toLowerCase() === cat;
+
+      const matchesSearch =
+        !q ||
+        (product.title || '').toLowerCase().includes(q) ||
+        (product.description || '').toLowerCase().includes(q) ||
+        (product.category || '').toLowerCase().includes(q);
+
+      return matchesCategory && matchesSearch;
+    });
+  }, [products, query, category]);
+
+  // Pagination math
+  const totalItems = filteredProducts.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
+  const safePage = Math.min(currentPage, totalPages);
+
+  const paginatedProducts = useMemo(() => {
+    const startIndex = (safePage - 1) * itemsPerPage;
+    return filteredProducts.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredProducts, safePage, itemsPerPage]);
+
+  const handlePageSelect = (newPage) => {
+    if (newPage < 1 || newPage > totalPages || newPage === safePage) return;
+    setCurrentPage(newPage);
+    if (onPageChange) onPageChange();
+  };
+
   if (loading) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-7 animate-pulse">
-        {[1, 2, 3, 4].map((n) => (
-          <div key={n} className="bg-white rounded-theme-lg p-3 sm:p-4 border border-black/[0.06] space-y-3">
-            <div className="w-full h-44 sm:h-56 md:h-64 bg-gray-200 rounded-theme-md" />
-            <div className="h-3 bg-gray-200 rounded w-1/3" />
-            <div className="h-4 bg-gray-200 rounded w-3/4" />
-            <div className="h-4 bg-gray-200 rounded w-1/2" />
-          </div>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-6">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div
+            key={i}
+            className="bg-white/70 rounded-theme-xl h-72 sm:h-80 animate-pulse border border-black/[0.04]"
+          />
         ))}
       </div>
     );
   }
 
-  // 2. Error State
-  if (error) {
+  if (totalItems === 0) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-theme-lg p-8 text-center text-red-700 max-w-md mx-auto my-6">
-        <p className="text-sm font-semibold">{error}</p>
-        <button
-          onClick={() => window.location.reload()}
-          className="mt-3 text-xs font-bold underline"
-        >
-          Try Again
-        </button>
-      </div>
-    );
-  }
-
-  // 3. Empty Search / Filter State
-  if (products.length === 0) {
-    return (
-      <div className="bg-white rounded-theme-lg p-12 text-center border border-black/[0.06] shadow-sm max-w-lg mx-auto">
-        <div className="w-14 h-14 rounded-full bg-themeBg-surface flex items-center justify-center mx-auto mb-3 text-themeText-muted">
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-        </div>
-        <h3 className="text-base font-bold text-themeText-primary">No bags found</h3>
-        <p className="text-xs text-themeText-secondary mt-1">
-          We couldn’t find any products matching your criteria.
+      <div className="bg-white rounded-theme-xl p-10 text-center border border-black/5 space-y-2">
+        <p className="text-sm font-bold text-themeText-primary">No bags found</p>
+        <p className="text-xs text-themeText-secondary">
+          Try clearing your search or switching to another category.
         </p>
-        <Link
-          href="/#catalog"
-          className="inline-block mt-4 px-5 py-2.5 bg-themePrimary text-white rounded-theme-md text-xs font-semibold active:scale-95 transition-transform"
-        >
-          Clear All Filters
-        </Link>
       </div>
     );
   }
 
-  // 4. Live Multi-Device Adaptive Product Grid
+  const startItemNumber = (safePage - 1) * itemsPerPage + 1;
+  const endItemNumber = Math.min(safePage * itemsPerPage, totalItems);
+
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-7">
-      {products.map((product) => (
-        <ProductCard key={product.id} product={product} />
-      ))}
+    <div className="space-y-8">
+      {/* Results Count Bar */}
+      <div className="flex items-center justify-between text-xs text-themeText-secondary">
+        <span>
+          Showing <strong>{startItemNumber}–{endItemNumber}</strong> of{' '}
+          <strong>{totalItems}</strong> handcrafted bags
+        </span>
+        {totalPages > 1 && (
+          <span className="font-semibold">
+            Page {safePage} of {totalPages}
+          </span>
+        )}
+      </div>
+
+      {/* Product Cards Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-6">
+        {paginatedProducts.map((product) => (
+          <ProductCard key={product.id} product={product} />
+        ))}
+      </div>
+
+      {/* Pagination Controls (Visible when > 20 items) */}
+      {totalPages > 1 && (
+        <div className="pt-4 border-t border-black/[0.06] flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-xs text-themeText-secondary">
+            Viewing {startItemNumber} to {endItemNumber} of {totalItems} items
+          </p>
+
+          <div className="flex items-center space-x-1.5">
+            {/* Previous Button */}
+            <button
+              type="button"
+              disabled={safePage === 1}
+              onClick={() => handlePageSelect(safePage - 1)}
+              className="px-3.5 py-2 rounded-theme-md bg-white border border-black/10 text-xs font-bold text-themeText-primary hover:bg-gray-50 disabled:opacity-40 disabled:pointer-events-none active:scale-95 transition-all"
+            >
+              ← Prev
+            </button>
+
+            {/* Page Number Pills */}
+            <div className="flex items-center space-x-1">
+              {Array.from({ length: totalPages }, (_, idx) => idx + 1).map((pageNum) => {
+                // Condense page numbers if there are many pages
+                if (
+                  totalPages > 5 &&
+                  pageNum !== 1 &&
+                  pageNum !== totalPages &&
+                  Math.abs(pageNum - safePage) > 1
+                ) {
+                  if (pageNum === safePage - 2 || pageNum === safePage + 2) {
+                    return (
+                      <span key={pageNum} className="px-1.5 text-xs text-themeText-secondary">
+                        ...
+                      </span>
+                    );
+                  }
+                  return null;
+                }
+
+                const isCurrent = pageNum === safePage;
+                return (
+                  <button
+                    key={pageNum}
+                    type="button"
+                    onClick={() => handlePageSelect(pageNum)}
+                    className={`w-9 h-9 rounded-theme-md text-xs font-extrabold transition-all active:scale-95 ${
+                      isCurrent
+                        ? 'bg-themePrimary text-white shadow-sm'
+                        : 'bg-white text-themeText-primary border border-black/10 hover:bg-gray-50'
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Next Button */}
+            <button
+              type="button"
+              disabled={safePage === totalPages}
+              onClick={() => handlePageSelect(safePage + 1)}
+              className="px-3.5 py-2 rounded-theme-md bg-white border border-black/10 text-xs font-bold text-themeText-primary hover:bg-gray-50 disabled:opacity-40 disabled:pointer-events-none active:scale-95 transition-all"
+            >
+              Next →
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
