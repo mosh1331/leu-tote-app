@@ -2,10 +2,9 @@
 import Link from 'next/link';
 import { STORE_INFO } from '@/lib/data';
 import CartButton from './CartButton';
-
+import HeaderProfileButton from './HeaderProfileButton';
 
 export default function Header({ showBack = false }) {
- 
   return (
     <header className="sticky top-0 z-40 w-full bg-white/90 backdrop-blur-md border-b border-black/[0.06] transition-all">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-4">
@@ -53,17 +52,18 @@ export default function Header({ showBack = false }) {
           </Link>
         </nav>
 
-        {/* Right: Actions (Wishlist & Cart CTA) */}
-        <div className="flex items-center space-x-2 sm:space-x-3">
+        {/* Right: Actions (Rewards, Profile/Login & Cart) */}
+        <div className="flex items-center space-x-2 sm:space-x-2.5">
           <Link
             href="/rewards"
-            className="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200/80 text-amber-800 text-xs font-bold hover:bg-amber-100 transition-colors"
+            className="hidden lg:flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200/80 text-amber-800 text-xs font-bold hover:bg-amber-100 transition-colors"
           >
             <span>★</span>
             <span>Rewards</span>
           </Link>
 
-        <CartButton />
+          <HeaderProfileButton />
+          <CartButton />
         </div>
       </div>
     </header>

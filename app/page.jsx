@@ -23,7 +23,7 @@ export default function HomePage() {
           { region: 'All Kerala', price: '₹69', tag: 'Express', highlight: true },
           { region: 'All India', price: '₹99', tag: 'Pan-India', highlight: false },
         ]}
-        ctaText="Shop Festive Collection"
+        ctaText="Shop Now"
       />
     </div>
   );
